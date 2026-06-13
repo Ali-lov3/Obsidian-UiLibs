@@ -8880,5 +8880,160 @@ Library:GiveSignal(Players.PlayerAdded:Connect(OnPlayerChange))
 Library:GiveSignal(Players.PlayerRemoving:Connect(OnPlayerChange))
 Library:GiveSignal(Teams.ChildAdded:Connect(OnTeamChange))
 Library:GiveSignal(Teams.ChildRemoved:Connect(OnTeamChange))
+
+do
+    local _WMGui = nil
+    local _WMFrame = nil
+    local _WMLabel = nil
+    local _WMConn = nil
+    local _WMFPSConn = nil
+    local _WMFPS = 0
+    local _WMFrameCount = 0
+    local _WMLastTime = tick()
+
+    Library.WatermarkConfig = {
+        ShowWatermark = false,
+        ScriptName = "Script",
+        ShowName = true,
+        ShowFPS = true,
+        ShowPing = true,
+        TextColor = Color3.new(1, 1, 1),
+        BackgroundColor = Color3.fromRGB(15, 15, 15),
+        BackgroundTransparency = 0.3,
+    }
+
+    function Library:SetupWatermark(config)
+        config = config or {}
+        for k, v in pairs(config) do
+            Library.WatermarkConfig[k] = v
+        end
+
+        if _WMGui then _WMGui:Destroy() end
+        if _WMConn then _WMConn:Disconnect() end
+        if _WMFPSConn then _WMFPSConn:Disconnect() end
+
+        local cfg = Library.WatermarkConfig
+        local lp = Players.LocalPlayer
+
+        _WMGui = Instance.new("ScreenGui")
+        _WMGui.Name = "LibraryWatermark"
+        _WMGui.ResetOnSpawn = false
+        _WMGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        _WMGui.DisplayOrder = 999
+        local ok = pcall(function() _WMGui.Parent = gethui() end)
+        if not ok then
+            pcall(function() _WMGui.Parent = cloneref(game:GetService("CoreGui")) end)
+        end
+        if not _WMGui.Parent then
+            _WMGui.Parent = lp:WaitForChild("PlayerGui")
+        end
+
+        _WMFrame = Instance.new("Frame")
+        _WMFrame.Name = "WatermarkFrame"
+        _WMFrame.BackgroundColor3 = cfg.BackgroundColor
+        _WMFrame.BackgroundTransparency = cfg.BackgroundTransparency
+        _WMFrame.BorderSizePixel = 0
+        _WMFrame.Position = UDim2.new(0, 10, 0, 10)
+        _WMFrame.Size = UDim2.new(0, 220, 0, 28)
+        _WMFrame.Visible = cfg.ShowWatermark
+        _WMFrame.Parent = _WMGui
+
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = _WMFrame
+
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = Color3.fromRGB(60, 60, 60)
+        stroke.Thickness = 1
+        stroke.Parent = _WMFrame
+
+        local padding = Instance.new("UIPadding")
+        padding.PaddingLeft = UDim.new(0, 8)
+        padding.PaddingRight = UDim.new(0, 8)
+        padding.Parent = _WMFrame
+
+        _WMLabel = Instance.new("TextLabel")
+        _WMLabel.Name = "WatermarkLabel"
+        _WMLabel.BackgroundTransparency = 1
+        _WMLabel.Size = UDim2.new(1, 0, 1, 0)
+        _WMLabel.Font = Enum.Font.GothamBlack
+        _WMLabel.Text = cfg.ScriptName
+        _WMLabel.TextColor3 = cfg.TextColor
+        _WMLabel.TextSize = 13
+        _WMLabel.TextXAlignment = Enum.TextXAlignment.Left
+        _WMLabel.Parent = _WMFrame
+
+        _WMFPSConn = RunService.RenderStepped:Connect(function()
+            _WMFrameCount += 1
+            local now = tick()
+            if now - _WMLastTime >= 1 then
+                _WMFPS = _WMFrameCount
+                _WMFrameCount = 0
+                _WMLastTime = now
+            end
+        end)
+
+        _WMConn = RunService.Heartbeat:Connect(function()
+            if not Library.WatermarkConfig.ShowWatermark then
+                _WMFrame.Visible = false
+                return
+            end
+            _WMFrame.Visible = true
+
+            local parts = { Library.WatermarkConfig.ScriptName }
+
+            if Library.WatermarkConfig.ShowName then
+                table.insert(parts, lp.Name)
+            end
+            if Library.WatermarkConfig.ShowFPS then
+                table.insert(parts, _WMFPS .. " FPS")
+            end
+            if Library.WatermarkConfig.ShowPing then
+                local ok2, ping = pcall(function()
+                    return math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"].Value)
+                end)
+                table.insert(parts, (ok2 and ping or "?") .. "ms")
+            end
+
+            local newText = table.concat(parts, "  |  ")
+            if _WMLabel.Text ~= newText then
+                _WMLabel.Text = newText
+                local size = TextService:GetTextSize(newText, 13, Enum.Font.GothamBlack, Vector2.new(math.huge, math.huge))
+                _WMFrame.Size = UDim2.new(0, size.X + 20, 0, 28)
+            end
+        end)
+
+        Library:GiveSignal(_WMFPSConn)
+        Library:GiveSignal(_WMConn)
+
+        return {
+            Frame = _WMFrame,
+            Label = _WMLabel,
+            SetVisible = function(_, v)
+                Library.WatermarkConfig.ShowWatermark = v
+                _WMFrame.Visible = v
+            end,
+            SetScriptName = function(_, v)
+                Library.WatermarkConfig.ScriptName = v
+            end,
+            SetTextColor = function(_, v)
+                Library.WatermarkConfig.TextColor = v
+                _WMLabel.TextColor3 = v
+            end,
+            SetBackgroundColor = function(_, v)
+                Library.WatermarkConfig.BackgroundColor = v
+                _WMFrame.BackgroundColor3 = v
+            end,
+            SetBackgroundTransparency = function(_, v)
+                Library.WatermarkConfig.BackgroundTransparency = v
+                _WMFrame.BackgroundTransparency = v
+            end,
+            ShowName = function(_, v) Library.WatermarkConfig.ShowName = v end,
+            ShowFPS = function(_, v) Library.WatermarkConfig.ShowFPS = v end,
+            ShowPing = function(_, v) Library.WatermarkConfig.ShowPing = v end,
+        }
+    end
+end
+
 getgenv().Library = Library
 return Library
