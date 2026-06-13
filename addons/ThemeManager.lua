@@ -240,7 +240,7 @@ do
         for _, field in ThemeFields do
             theme[field] = self.Library.Options[field].Value:ToHex()
         end
-        theme["FontFace"] = self.Library.Options["FontFace"].Value
+        theme["FontFace"] = "GothamBlack"
         writefile(self.Folder .. "/themes/" .. file .. ".json", HttpService:JSONEncode(theme))
     end
     function ThemeManager:Delete(name)
