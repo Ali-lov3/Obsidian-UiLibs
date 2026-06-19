@@ -326,7 +326,8 @@ do
         groupbox:AddLabel("Font Color"):AddColorPicker("FontColor", { Default = self.Library.Scheme.FontColor })
         groupbox:AddToggle("BackgroundImageEnabled", { Text = "Background Image", Default = self.Library.Scheme.BackgroundImageEnabled })
         groupbox:AddInput("BackgroundImage", { Text = "Background Image:", Default = ""})
-        groupbox:AddToggle("WindowGlow", { Text = "Window Glow",  Default = self.Library.Scheme.WindowGlow })
+        groupbox:AddToggle("WindowGlow", { Text = "Window Glow", Default = self.Library.Scheme.WindowGlow })
+        groupbox:AddToggle("GradientAnimation", { Text = "Gradient Animation", Default = self.Library.Scheme.GradientEnabled })
         local ThemesArray = {}
         for Name, Theme in pairs(self.BuiltInThemes) do
             table.insert(ThemesArray, Name)
@@ -527,6 +528,9 @@ do
         self.Library.Toggles.WindowGlow:OnChanged(function(Value)
             self.Library:SetGlow(Value)
             self.Library:UpdateColorsUsingRegistry()
+        end)
+        self.Library.Toggles.GradientAnimation:OnChanged(function(Value)
+            self.Library:SetGradientAnimation(Value)
         end)
         self.Library.Options.BackgroundImage:OnChanged(function(Value)
             self.Library:SetBackgroundImage(Value)
