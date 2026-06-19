@@ -826,6 +826,13 @@ function Library:UpdateColorsUsingRegistry()
             end
         end
     end
+    if Library.GradientColor then
+        Library.GradientColor.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Library.Scheme.AccentColor),
+            ColorSequenceKeypoint.new(0.5, Library.Scheme.MainColor),
+            ColorSequenceKeypoint.new(1, Library.Scheme.AccentColor),
+        })
+    end
 end
 function Library:SetDPIScale(DPIScale: number)
     Library.DPIScale = DPIScale / 100
@@ -5435,8 +5442,10 @@ function Library:SetGradientAnimation(State: boolean)
                     if Library.GradientOverlay then Library.GradientOverlay.Visible = false end
                     return
                 end
-                t = (t + dt * 0.25) % 1
-                Library.GradientSweepBar.Position = UDim2.new(-0.38 + t * 1.38, 0, 0, 0)
+                t = (t + dt * 25) % 360
+                if Library.GradientColor then
+                    Library.GradientColor.Rotation = t
+                end
             end)
             Library:GiveSignal(Library.GradientConnection)
         end
@@ -5580,6 +5589,7 @@ function Library:CreateWindow(WindowInfo)
         )
         do
             local GradientOverlay = New("Frame", {
+                BackgroundColor3 = Color3.new(1, 1, 1),
                 BackgroundTransparency = 1,
                 ClipsDescendants = true,
                 Size = UDim2.fromScale(1, 1),
@@ -5591,25 +5601,22 @@ function Library:CreateWindow(WindowInfo)
                 CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
                 Parent = GradientOverlay,
             }))
-            local GradientSweepBar = New("Frame", {
-                BackgroundColor3 = Color3.new(1, 1, 1),
-                BackgroundTransparency = 0.82,
-                Position = UDim2.new(-0.38, 0, 0, 0),
-                Size = UDim2.new(0.38, 0, 1, 0),
-                ZIndex = 3,
+            local GradientColor = New("UIGradient", {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Library.Scheme.AccentColor),
+                    ColorSequenceKeypoint.new(0.5, Library.Scheme.MainColor),
+                    ColorSequenceKeypoint.new(1, Library.Scheme.AccentColor),
+                }),
+                Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, 0.82),
+                    NumberSequenceKeypoint.new(0.5, 0.6),
+                    NumberSequenceKeypoint.new(1, 0.82),
+                }),
+                Rotation = 0,
                 Parent = GradientOverlay,
             })
-            New("UIGradient", {
-                Transparency = NumberSequence.new({
-                    NumberSequenceKeypoint.new(0, 1),
-                    NumberSequenceKeypoint.new(0.5, 0.82),
-                    NumberSequenceKeypoint.new(1, 1),
-                }),
-                Rotation = 90,
-                Parent = GradientSweepBar,
-            })
             Library.GradientOverlay = GradientOverlay
-            Library.GradientSweepBar = GradientSweepBar
+            Library.GradientColor = GradientColor
             Library.GradientConnection = nil
         end
         if WindowInfo.Center then
