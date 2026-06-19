@@ -5155,7 +5155,7 @@ function Library:Notify(...)
     })
     local Holder = New("Frame", {
         AutomaticSize = Enum.AutomaticSize.Y,
-        BackgroundColor3 = "MainColor",
+        BackgroundColor3 = "BackgroundColor",
         Position = Library.NotifySide:lower() == "left" and UDim2.new(-1, -8, 0, -2) or UDim2.new(1, 8, 0, -2),
         Size = UDim2.fromScale(1, 1),
         ZIndex = 5,
@@ -5173,20 +5173,33 @@ function Library:Notify(...)
         Color = function()
             return ColorSequence.new({
                 ColorSequenceKeypoint.new(0, Library.Scheme.AccentColor),
-                ColorSequenceKeypoint.new(0.07, Library.Scheme.MainColor),
-                ColorSequenceKeypoint.new(1, Library.Scheme.MainColor),
+                ColorSequenceKeypoint.new(0.18, Library.Scheme.MainColor),
+                ColorSequenceKeypoint.new(1, Library.Scheme.BackgroundColor),
             })
         end,
     })
+    local AccentBar = New("Frame", {
+        BackgroundColor3 = "AccentColor",
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(0, 0),
+        Size = UDim2.new(0, 3, 1, 0),
+        ZIndex = 7,
+        Parent = Holder,
+    })
+    New("UICorner", {
+        CornerRadius = UDim.new(0, Library.CornerRadius),
+        Parent = AccentBar,
+    })
+    Library:AddToRegistry(AccentBar, { BackgroundColor3 = "AccentColor" })
     New("UIListLayout", {
-        Padding = UDim.new(0, 4),
+        Padding = UDim.new(0, 5),
         Parent = Holder,
     })
     New("UIPadding", {
-        PaddingBottom = UDim.new(0, 10),
-        PaddingLeft = UDim.new(0, 14),
-        PaddingRight = UDim.new(0, 10),
-        PaddingTop = UDim.new(0, 10),
+        PaddingBottom = UDim.new(0, 12),
+        PaddingLeft = UDim.new(0, 18),
+        PaddingRight = UDim.new(0, 12),
+        PaddingTop = UDim.new(0, 12),
         Parent = Holder,
     })
     Library:AddOutline(Holder)
@@ -5264,11 +5277,12 @@ function Library:Notify(...)
             AutomaticSize = Enum.AutomaticSize.None,
             BackgroundTransparency = 1,
             AnchorPoint = Vector2.new(0, 0.5),
-            Position = UDim2.new(0, (Data.Icon and 21 or 0), 0.5, 0),
+            Position = UDim2.new(0, (Data.Icon and 22 or 0), 0.5, 0),
             Size = UDim2.fromScale(0, 0),
             Text = Data.Title,
-            TextColor3 = "AccentColor",
+            TextColor3 = "FontColor",
             TextSize = 15,
+            Font = Enum.Font.GothamBold,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextYAlignment = Enum.TextYAlignment.Center,
             TextWrapped = true,
@@ -5281,7 +5295,9 @@ function Library:Notify(...)
             BackgroundTransparency = 1,
             Size = UDim2.fromScale(0, 0),
             Text = Data.Description,
-            TextSize = 14,
+            TextColor3 = "FontColor",
+            TextTransparency = 0.15,
+            TextSize = 13,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextWrapped = true,
             Parent = TextContainer,
@@ -5346,13 +5362,13 @@ function Library:Notify(...)
     Data:Resize()
     local TimerHolder = New("Frame", {
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 8),
+        Size = UDim2.new(1, 0, 0, 10),
         Visible = (Data.Persist ~= true and typeof(Data.Time) ~= "Instance") or typeof(Data.Steps) == "number",
         Parent = Holder,
     })
     local TimerBar = New("Frame", {
-        BackgroundColor3 = "BackgroundColor",
-        Position = UDim2.fromOffset(0, 4),
+        BackgroundColor3 = "MainColor",
+        Position = UDim2.fromOffset(0, 5),
         Size = UDim2.new(1, 0, 0, 4),
         Parent = TimerHolder,
     })
@@ -5435,7 +5451,6 @@ function Library:SetGradientAnimation(State: boolean)
     if State then
         if not Library.GradientConnection then
             local t = 0
-            local hShift = 0
             Library.GradientConnection = RunService.Heartbeat:Connect(function(dt)
                 if Library.Unloaded or not Library.Scheme.GradientEnabled then
                     if Library.GradientConnection then Library.GradientConnection:Disconnect() end
@@ -5443,18 +5458,12 @@ function Library:SetGradientAnimation(State: boolean)
                     if Library.GradientOverlay then Library.GradientOverlay.Visible = false end
                     return
                 end
-                t = (t + dt * 40) % 360
-                hShift = (hShift + dt * 0.12) % 1
+                t = (t + dt * 35) % 360
                 if Library.GradientColor then
                     Library.GradientColor.Rotation = t
-                    local h, s, v = Library.Scheme.AccentColor:ToHSV()
-                    local shifted1 = Color3.fromHSV((h + hShift * 0.3) % 1, math.min(s * 1.1, 1), math.min(v * 1.25, 1))
-                    local shifted2 = Color3.fromHSV((h + hShift * 0.3 + 0.15) % 1, s, math.min(v * 0.85, 1))
                     Library.GradientColor.Color = ColorSequence.new({
                         ColorSequenceKeypoint.new(0, Library.Scheme.AccentColor),
-                        ColorSequenceKeypoint.new(0.25, shifted1),
                         ColorSequenceKeypoint.new(0.5, Library.Scheme.MainColor),
-                        ColorSequenceKeypoint.new(0.75, shifted2),
                         ColorSequenceKeypoint.new(1, Library.Scheme.AccentColor),
                     })
                 end
