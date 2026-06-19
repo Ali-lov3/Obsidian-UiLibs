@@ -2944,6 +2944,10 @@ do
                 Visible = Button.Visible,
                 Parent = Holder,
             })
+            table.insert(Library.Corners, New("UICorner", {
+                CornerRadius = UDim.new(0, Library.CornerRadius),
+                Parent = Base,
+            }))
             local Stroke = New("UIStroke", {
                 Color = "OutlineColor",
                 Transparency = Button.Disabled and 0.5 or 0,
@@ -3505,6 +3509,10 @@ do
             Color = "OutlineColor",
             Parent = Box,
         })
+        table.insert(Library.Corners, New("UICorner", {
+            CornerRadius = UDim.new(0, Library.CornerRadius),
+            Parent = Box,
+        }))
         function Input:UpdateColors()
             if Library.Unloaded then
                 return
@@ -3877,6 +3885,10 @@ do
             Color = "OutlineColor",
             Parent = DisplayContainer,
         })
+        table.insert(Library.Corners, New("UICorner", {
+            CornerRadius = UDim.new(0, Library.CornerRadius),
+            Parent = DisplayContainer,
+        }))
         local DisplayImage = New("ImageLabel", {
             BackgroundTransparency = 1,
             Position = UDim2.fromOffset(-4, 3),
