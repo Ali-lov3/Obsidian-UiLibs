@@ -5155,7 +5155,7 @@ function Library:Notify(...)
     })
     local Holder = New("Frame", {
         AutomaticSize = Enum.AutomaticSize.Y,
-        BackgroundColor3 = "MainColor",
+        BackgroundColor3 = "BackgroundColor",
         Position = Library.NotifySide:lower() == "left" and UDim2.new(-1, -8, 0, -2) or UDim2.new(1, 8, 0, -2),
         Size = UDim2.fromScale(1, 1),
         ZIndex = 5,
@@ -5173,7 +5173,7 @@ function Library:Notify(...)
         Color = function()
             return ColorSequence.new({
                 ColorSequenceKeypoint.new(0, Library.Scheme.AccentColor),
-                ColorSequenceKeypoint.new(0.07, Lib2, Library.Scheme.MainColor),
+                ColorSequenceKeypoint.new(0.12, Library.Scheme.MainColor),
                 ColorSequenceKeypoint.new(1, Library.Scheme.BackgroundColor),
             })
         end,
@@ -9130,7 +9130,10 @@ do
             if _WMLabel.Text ~= newText then
                 _WMLabel.Text = newText
                 local size = TextService:GetTextSize(newText, 13, Enum.Font.GothamBold, Vector2.new(math.huge, math.huge))
-                _WMFrame.Size = UDim2.new(0, size.X + 24, 0, 32 Library:GiveSignal(_WMFPSConn)
+                _WMFrame.Size = UDim2.new(0, size.X + 24, 0, 32)
+            end
+        end)
+        Library:GiveSignal(_WMFPSConn)
         Library:GiveSignal(_WMConn)
         return {
             Frame = _WMFrame,
