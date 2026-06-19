@@ -328,6 +328,8 @@ do
         groupbox:AddInput("BackgroundImage", { Text = "Background Image:", Default = ""})
         groupbox:AddToggle("WindowGlow", { Text = "Window Glow", Default = self.Library.Scheme.WindowGlow })
         groupbox:AddToggle("GradientAnimation", { Text = "Gradient Animation", Default = self.Library.Scheme.GradientEnabled })
+        groupbox:AddSlider("WindowTransparency", { Text = "Window Transparency:", Min = 0, Max = 80, Default = self.Library.Scheme.WindowTransparency or 0, Rounding = 0, Suffix = "%" })
+        groupbox:AddSlider("CornerRadius", { Text = "Corner Radius:", Min = 0, Max = 20, Default = self.Library.CornerRadius or 11, Rounding = 0 })
         local ThemesArray = {}
         for Name, Theme in pairs(self.BuiltInThemes) do
             table.insert(ThemesArray, Name)
@@ -535,6 +537,16 @@ do
         self.Library.Options.BackgroundImage:OnChanged(function(Value)
             self.Library:SetBackgroundImage(Value)
             self.Library:UpdateColorsUsingRegistry()
+        end)
+        self.Library.Options.WindowTransparency:OnChanged(function(Value)
+            if self.Library.Window and self.Library.Window.SetWindowTransparency then
+                self.Library.Window:SetWindowTransparency(Value)
+            end
+        end)
+        self.Library.Options.CornerRadius:OnChanged(function(Value)
+            if self.Library.Window and self.Library.Window.SetCornerRadius then
+                self.Library.Window:SetCornerRadius(Value)
+            end
         end)
     end
     function ThemeManager:CreateGroupBox(tab)
