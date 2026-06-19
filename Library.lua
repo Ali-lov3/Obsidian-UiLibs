@@ -190,6 +190,7 @@ local Library = {
         BackgroundImageEnabled = false,
         BackgroundImage = "",
         WindowGlow = true,
+        GradientEnabled = false,
     },
     Registry = {},
     Scales = {},
@@ -5154,18 +5155,31 @@ function Library:Notify(...)
         Parent = FakeBackground,
     })
     New("UICorner", {
-        CornerRadius = UDim.new(0, 4),
+        CornerRadius = UDim.new(0, Library.CornerRadius),
         Parent = Holder,
+    })
+    local NotifyGradient = New("UIGradient", {
+        Rotation = 0,
+        Parent = Holder,
+    })
+    Library:AddToRegistry(NotifyGradient, {
+        Color = function()
+            return ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Library.Scheme.AccentColor),
+                ColorSequenceKeypoint.new(0.07, Library.Scheme.MainColor),
+                ColorSequenceKeypoint.new(1, Library.Scheme.MainColor),
+            })
+        end,
     })
     New("UIListLayout", {
         Padding = UDim.new(0, 4),
         Parent = Holder,
     })
     New("UIPadding", {
-        PaddingBottom = UDim.new(0, 8),
-        PaddingLeft = UDim.new(0, 8),
-        PaddingRight = UDim.new(0, 8),
-        PaddingTop = UDim.new(0, 8),
+        PaddingBottom = UDim.new(0, 10),
+        PaddingLeft = UDim.new(0, 14),
+        PaddingRight = UDim.new(0, 10),
+        PaddingTop = UDim.new(0, 10),
         Parent = Holder,
     })
     Library:AddOutline(Holder)
@@ -5325,22 +5339,28 @@ function Library:Notify(...)
     Data:Resize()
     local TimerHolder = New("Frame", {
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 7),
+        Size = UDim2.new(1, 0, 0, 8),
         Visible = (Data.Persist ~= true and typeof(Data.Time) ~= "Instance") or typeof(Data.Steps) == "number",
         Parent = Holder,
     })
     local TimerBar = New("Frame", {
         BackgroundColor3 = "BackgroundColor",
-        BorderColor3 = "OutlineColor",
-        BorderSizePixel = 1,
-        Position = UDim2.fromOffset(0, 3),
-        Size = UDim2.new(1, 0, 0, 2),
+        Position = UDim2.fromOffset(0, 4),
+        Size = UDim2.new(1, 0, 0, 4),
         Parent = TimerHolder,
+    })
+    New("UICorner", {
+        CornerRadius = UDim.new(1, 0),
+        Parent = TimerBar,
     })
     TimerFill = New("Frame", {
         BackgroundColor3 = "AccentColor",
         Size = UDim2.fromScale(1, 1),
         Parent = TimerBar,
+    })
+    New("UICorner", {
+        CornerRadius = UDim.new(1, 0),
+        Parent = TimerFill,
     })
     if typeof(Data.Time) == "Instance" then
         TimerFill.Size = UDim2.fromScale(0, 1)
@@ -5400,6 +5420,32 @@ function Library:SetGlow(State: boolean)
     self.Scheme.WindowGlow = State
     self.Window.Glow.Visible = State
     self:UpdateColorsUsingRegistry()
+end
+function Library:SetGradientAnimation(State: boolean)
+    Library.Scheme.GradientEnabled = State
+    if not Library.GradientOverlay then return end
+    Library.GradientOverlay.Visible = State
+    if State then
+        if not Library.GradientConnection then
+            local t = 0
+            Library.GradientConnection = RunService.Heartbeat:Connect(function(dt)
+                if Library.Unloaded or not Library.Scheme.GradientEnabled then
+                    if Library.GradientConnection then Library.GradientConnection:Disconnect() end
+                    Library.GradientConnection = nil
+                    if Library.GradientOverlay then Library.GradientOverlay.Visible = false end
+                    return
+                end
+                t = (t + dt * 0.25) % 1
+                Library.GradientSweepBar.Position = UDim2.new(-0.38 + t * 1.38, 0, 0, 0)
+            end)
+            Library:GiveSignal(Library.GradientConnection)
+        end
+    else
+        if Library.GradientConnection then
+            Library.GradientConnection:Disconnect()
+            Library.GradientConnection = nil
+        end
+    end
 end
 function Library:CreateWindow(WindowInfo)
     WindowInfo = Library:Validate(WindowInfo, Templates.Window)
@@ -5532,6 +5578,40 @@ function Library:CreateWindow(WindowInfo)
                 Parent = BackgroundImage,
             })
         )
+        do
+            local GradientOverlay = New("Frame", {
+                BackgroundTransparency = 1,
+                ClipsDescendants = true,
+                Size = UDim2.fromScale(1, 1),
+                ZIndex = 2,
+                Visible = Library.Scheme.GradientEnabled,
+                Parent = MainFrame,
+            })
+            table.insert(Library.Corners, New("UICorner", {
+                CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
+                Parent = GradientOverlay,
+            }))
+            local GradientSweepBar = New("Frame", {
+                BackgroundColor3 = Color3.new(1, 1, 1),
+                BackgroundTransparency = 0.82,
+                Position = UDim2.new(-0.38, 0, 0, 0),
+                Size = UDim2.new(0.38, 0, 1, 0),
+                ZIndex = 3,
+                Parent = GradientOverlay,
+            })
+            New("UIGradient", {
+                Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, 1),
+                    NumberSequenceKeypoint.new(0.5, 0.82),
+                    NumberSequenceKeypoint.new(1, 1),
+                }),
+                Rotation = 90,
+                Parent = GradientSweepBar,
+            })
+            Library.GradientOverlay = GradientOverlay
+            Library.GradientSweepBar = GradientSweepBar
+            Library.GradientConnection = nil
+        end
         if WindowInfo.Center then
             MainFrame.Position = UDim2.new(0.5, -MainFrame.Size.X.Offset / 2, 0.5, -MainFrame.Size.Y.Offset / 2)
         end
@@ -8935,31 +9015,38 @@ do
         end
         _WMFrame = Instance.new("Frame")
         _WMFrame.Name = "WatermarkFrame"
-        _WMFrame.BackgroundColor3 = cfg.BackgroundColor
-        _WMFrame.BackgroundTransparency = cfg.BackgroundTransparency
+        _WMFrame.BackgroundColor3 = Library.Scheme.BackgroundColor
+        _WMFrame.BackgroundTransparency = 0
         _WMFrame.BorderSizePixel = 0
         _WMFrame.Position = UDim2.new(0, 10, 0, 10)
-        _WMFrame.Size = UDim2.new(0, 220, 0, 28)
+        _WMFrame.Size = UDim2.new(0, 220, 0, 30)
         _WMFrame.Visible = cfg.ShowWatermark
         _WMFrame.Parent = _WMGui
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 6)
-        corner.Parent = _WMFrame
-        local stroke = Instance.new("UIStroke")
-        stroke.Color = Color3.fromRGB(60, 60, 60)
-        stroke.Thickness = 1
-        stroke.Parent = _WMFrame
-        local padding = Instance.new("UIPadding")
-        padding.PaddingLeft = UDim.new(0, 8)
-        padding.PaddingRight = UDim.new(0, 8)
-        padding.Parent = _WMFrame
+        local _wmCorner = Instance.new("UICorner")
+        _wmCorner.CornerRadius = UDim.new(0, Library.CornerRadius)
+        _wmCorner.Parent = _WMFrame
+        local _wmStroke = Instance.new("UIStroke")
+        _wmStroke.Color = Library.Scheme.OutlineColor
+        _wmStroke.Thickness = 1
+        _wmStroke.Parent = _WMFrame
+        local _wmGradient = Instance.new("UIGradient")
+        _wmGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Library.Scheme.AccentColor),
+            ColorSequenceKeypoint.new(0.08, Library.Scheme.MainColor),
+            ColorSequenceKeypoint.new(1, Library.Scheme.MainColor),
+        })
+        _wmGradient.Parent = _WMFrame
+        local _wmPadding = Instance.new("UIPadding")
+        _wmPadding.PaddingLeft = UDim.new(0, 12)
+        _wmPadding.PaddingRight = UDim.new(0, 10)
+        _wmPadding.Parent = _WMFrame
         _WMLabel = Instance.new("TextLabel")
         _WMLabel.Name = "WatermarkLabel"
         _WMLabel.BackgroundTransparency = 1
         _WMLabel.Size = UDim2.new(1, 0, 1, 0)
         _WMLabel.Font = Enum.Font.GothamBlack
         _WMLabel.Text = cfg.ScriptName
-        _WMLabel.TextColor3 = cfg.TextColor
+        _WMLabel.TextColor3 = Library.Scheme.FontColor
         _WMLabel.TextSize = 13
         _WMLabel.TextXAlignment = Enum.TextXAlignment.Left
         _WMLabel.Parent = _WMFrame
@@ -8978,6 +9065,14 @@ do
                 return
             end
             _WMFrame.Visible = true
+            _WMFrame.BackgroundColor3 = Library.Scheme.BackgroundColor
+            _wmStroke.Color = Library.Scheme.OutlineColor
+            _wmGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Library.Scheme.AccentColor),
+                ColorSequenceKeypoint.new(0.08, Library.Scheme.MainColor),
+                ColorSequenceKeypoint.new(1, Library.Scheme.MainColor),
+            })
+            _WMLabel.TextColor3 = Library.Scheme.FontColor
             local parts = { Library.WatermarkConfig.ScriptName }
             if Library.WatermarkConfig.ShowName then
                 table.insert(parts, lp.Name)
