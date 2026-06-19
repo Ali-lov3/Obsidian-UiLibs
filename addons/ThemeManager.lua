@@ -157,6 +157,80 @@ do
         end
         self.Library:UpdateColorsUsingRegistry()
     end
+    function ThemeManager:GetThemeSaveData()
+        local data = {}
+        for _, field in ThemeFields do
+            if self.Library.Options and self.Library.Options[field] then
+                data[field] = self.Library.Options[field].Value:ToHex()
+            end
+        end
+        if self.Library.Options and self.Library.Options.FontFace then
+            data.FontFace = self.Library.Options.FontFace.Value
+        end
+        if self.Library.Toggles then
+            if self.Library.Toggles.GradientAnimation then
+                data.GradientAnimation = self.Library.Toggles.GradientAnimation.Value
+            end
+            if self.Library.Toggles.WindowGlow then
+                data.WindowGlow = self.Library.Toggles.WindowGlow.Value
+            end
+            if self.Library.Toggles.BackgroundImageEnabled then
+                data.BackgroundImageEnabled = self.Library.Toggles.BackgroundImageEnabled.Value
+            end
+        end
+        if self.Library.Options then
+            if self.Library.Options.WindowTransparency then
+                data.WindowTransparency = self.Library.Options.WindowTransparency.Value
+            end
+            if self.Library.Options.CornerRadius then
+                data.CornerRadius = self.Library.Options.CornerRadius.Value
+            end
+            if self.Library.Options.BackgroundImage then
+                data.BackgroundImage = self.Library.Options.BackgroundImage.Value
+            end
+        end
+        return data
+    end
+    function ThemeManager:LoadThemeSaveData(data)
+        if not data then return end
+        for _, field in ThemeFields do
+            if data[field] then
+                self.Library.Scheme[field] = Color3.fromHex(data[field])
+                if self.Library.Options and self.Library.Options[field] then
+                    self.Library.Options[field]:SetValueRGB(Color3.fromHex(data[field]))
+                end
+            end
+        end
+        if data.FontFace and Enum.Font[data.FontFace] then
+            self.Library:SetFont(Enum.Font[data.FontFace])
+            if self.Library.Options and self.Library.Options.FontFace then
+                self.Library.Options.FontFace:SetValue(data.FontFace)
+            end
+        end
+        if self.Library.Toggles then
+            if data.GradientAnimation ~= nil and self.Library.Toggles.GradientAnimation then
+                self.Library.Toggles.GradientAnimation:SetValue(data.GradientAnimation)
+            end
+            if data.WindowGlow ~= nil and self.Library.Toggles.WindowGlow then
+                self.Library.Toggles.WindowGlow:SetValue(data.WindowGlow)
+            end
+            if data.BackgroundImageEnabled ~= nil and self.Library.Toggles.BackgroundImageEnabled then
+                self.Library.Toggles.BackgroundImageEnabled:SetValue(data.BackgroundImageEnabled)
+            end
+        end
+        if self.Library.Options then
+            if data.WindowTransparency ~= nil and self.Library.Options.WindowTransparency then
+                self.Library.Options.WindowTransparency:SetValue(data.WindowTransparency)
+            end
+            if data.CornerRadius ~= nil and self.Library.Options.CornerRadius then
+                self.Library.Options.CornerRadius:SetValue(data.CornerRadius)
+            end
+            if data.BackgroundImage and self.Library.Options.BackgroundImage then
+                self.Library.Options.BackgroundImage:SetValue(data.BackgroundImage)
+            end
+        end
+        self:ThemeUpdate()
+    end
     function ThemeManager:GetCustomTheme(file)
         local path = self.Folder .. "/themes/" .. file .. ".json"
         if not isfile(path) then

@@ -418,6 +418,12 @@ local SaveManager = {} do
             task.spawn(self.Parser[option.type].Load, option.idx, option)
         end
 
+        if self.ThemeManager and decoded.theme then
+            task.defer(function()
+                self.ThemeManager:LoadThemeSaveData(decoded.theme)
+            end)
+        end
+
         return true
     end
 
