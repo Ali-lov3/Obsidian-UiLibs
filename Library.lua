@@ -5155,7 +5155,7 @@ function Library:Notify(...)
     })
     local Holder = New("Frame", {
         AutomaticSize = Enum.AutomaticSize.Y,
-        BackgroundColor3 = "BackgroundColor",
+        BackgroundColor3 = "MainColor",
         Position = Library.NotifySide:lower() == "left" and UDim2.new(-1, -8, 0, -2) or UDim2.new(1, 8, 0, -2),
         Size = UDim2.fromScale(1, 1),
         ZIndex = 5,
@@ -5173,33 +5173,20 @@ function Library:Notify(...)
         Color = function()
             return ColorSequence.new({
                 ColorSequenceKeypoint.new(0, Library.Scheme.AccentColor),
-                ColorSequenceKeypoint.new(0.18, Library.Scheme.MainColor),
+                ColorSequenceKeypoint.new(0.07, Lib2, Library.Scheme.MainColor),
                 ColorSequenceKeypoint.new(1, Library.Scheme.BackgroundColor),
             })
         end,
     })
-    local AccentBar = New("Frame", {
-        BackgroundColor3 = "AccentColor",
-        BorderSizePixel = 0,
-        Position = UDim2.fromOffset(0, 0),
-        Size = UDim2.new(0, 3, 1, 0),
-        ZIndex = 7,
-        Parent = Holder,
-    })
-    New("UICorner", {
-        CornerRadius = UDim.new(0, Library.CornerRadius),
-        Parent = AccentBar,
-    })
-    Library:AddToRegistry(AccentBar, { BackgroundColor3 = "AccentColor" })
     New("UIListLayout", {
-        Padding = UDim.new(0, 5),
+        Padding = UDim.new(0, 4),
         Parent = Holder,
     })
     New("UIPadding", {
-        PaddingBottom = UDim.new(0, 12),
-        PaddingLeft = UDim.new(0, 18),
-        PaddingRight = UDim.new(0, 12),
-        PaddingTop = UDim.new(0, 12),
+        PaddingBottom = UDim.new(0, 10),
+        PaddingLeft = UDim.new(0, 14),
+        PaddingRight = UDim.new(0, 10),
+        PaddingTop = UDim.new(0, 10),
         Parent = Holder,
     })
     Library:AddOutline(Holder)
@@ -5277,12 +5264,11 @@ function Library:Notify(...)
             AutomaticSize = Enum.AutomaticSize.None,
             BackgroundTransparency = 1,
             AnchorPoint = Vector2.new(0, 0.5),
-            Position = UDim2.new(0, (Data.Icon and 22 or 0), 0.5, 0),
+            Position = UDim2.new(0, (Data.Icon and 21 or 0), 0.5, 0),
             Size = UDim2.fromScale(0, 0),
             Text = Data.Title,
-            TextColor3 = "FontColor",
+            TextColor3 = "AccentColor",
             TextSize = 15,
-            Font = Enum.Font.GothamBold,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextYAlignment = Enum.TextYAlignment.Center,
             TextWrapped = true,
@@ -5295,9 +5281,7 @@ function Library:Notify(...)
             BackgroundTransparency = 1,
             Size = UDim2.fromScale(0, 0),
             Text = Data.Description,
-            TextColor3 = "FontColor",
-            TextTransparency = 0.15,
-            TextSize = 13,
+            TextSize = 14,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextWrapped = true,
             Parent = TextContainer,
@@ -5362,13 +5346,13 @@ function Library:Notify(...)
     Data:Resize()
     local TimerHolder = New("Frame", {
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 10),
+        Size = UDim2.new(1, 0, 0, 8),
         Visible = (Data.Persist ~= true and typeof(Data.Time) ~= "Instance") or typeof(Data.Steps) == "number",
         Parent = Holder,
     })
     local TimerBar = New("Frame", {
         BackgroundColor3 = "MainColor",
-        Position = UDim2.fromOffset(0, 5),
+        Position = UDim2.fromOffset(0, 4),
         Size = UDim2.new(1, 0, 0, 4),
         Parent = TimerHolder,
     })
@@ -5458,13 +5442,19 @@ function Library:SetGradientAnimation(State: boolean)
                     if Library.GradientOverlay then Library.GradientOverlay.Visible = false end
                     return
                 end
-                t = (t + dt * 35) % 360
+                t = (t + dt * 38) % 360
                 if Library.GradientColor then
                     Library.GradientColor.Rotation = t
                     Library.GradientColor.Color = ColorSequence.new({
                         ColorSequenceKeypoint.new(0, Library.Scheme.AccentColor),
                         ColorSequenceKeypoint.new(0.5, Library.Scheme.MainColor),
                         ColorSequenceKeypoint.new(1, Library.Scheme.AccentColor),
+                    })
+                    local breathe = (math.sin(t * 0.065) + 1) * 0.5
+                    Library.GradientColor.Transparency = NumberSequence.new({
+                        NumberSequenceKeypoint.new(0, 0.82 + breathe * 0.06),
+                        NumberSequenceKeypoint.new(0.5, 0.60 + breathe * 0.12),
+                        NumberSequenceKeypoint.new(1, 0.82 + breathe * 0.06),
                     })
                 end
             end)
@@ -9056,32 +9046,34 @@ do
         _WMFrame.BackgroundTransparency = 0
         _WMFrame.BorderSizePixel = 0
         _WMFrame.Position = UDim2.new(0, 10, 0, 10)
-        _WMFrame.Size = UDim2.new(0, 220, 0, 30)
+        _WMFrame.Size = UDim2.new(0, 220, 0, 32)
         _WMFrame.Visible = cfg.ShowWatermark
         _WMFrame.Parent = _WMGui
         local _wmCorner = Instance.new("UICorner")
         _wmCorner.CornerRadius = UDim.new(0, Library.CornerRadius)
         _wmCorner.Parent = _WMFrame
         local _wmStroke = Instance.new("UIStroke")
-        _wmStroke.Color = Library.Scheme.OutlineColor
-        _wmStroke.Thickness = 1
+        _wmStroke.Color = Library.Scheme.AccentColor
+        _wmStroke.Thickness = 1.5
         _wmStroke.Parent = _WMFrame
         local _wmGradient = Instance.new("UIGradient")
         _wmGradient.Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Library.Scheme.AccentColor),
-            ColorSequenceKeypoint.new(0.08, Library.Scheme.MainColor),
-            ColorSequenceKeypoint.new(1, Library.Scheme.MainColor),
+            ColorSequenceKeypoint.new(0.15, Library.Scheme.MainColor),
+            ColorSequenceKeypoint.new(1, Library.Scheme.BackgroundColor),
         })
         _wmGradient.Parent = _WMFrame
         local _wmPadding = Instance.new("UIPadding")
         _wmPadding.PaddingLeft = UDim.new(0, 12)
         _wmPadding.PaddingRight = UDim.new(0, 10)
+        _wmPadding.PaddingTop = UDim.new(0, 2)
+        _wmPadding.PaddingBottom = UDim.new(0, 2)
         _wmPadding.Parent = _WMFrame
         _WMLabel = Instance.new("TextLabel")
         _WMLabel.Name = "WatermarkLabel"
         _WMLabel.BackgroundTransparency = 1
         _WMLabel.Size = UDim2.new(1, 0, 1, 0)
-        _WMLabel.Font = Enum.Font.GothamBlack
+        _WMLabel.Font = Enum.Font.GothamBold
         _WMLabel.Text = cfg.ScriptName
         _WMLabel.TextColor3 = Library.Scheme.FontColor
         _WMLabel.TextSize = 13
@@ -9103,11 +9095,11 @@ do
             end
             _WMFrame.Visible = true
             _WMFrame.BackgroundColor3 = Library.Scheme.BackgroundColor
-            _wmStroke.Color = Library.Scheme.OutlineColor
+            _wmStroke.Color = Library.Scheme.AccentColor
             _wmGradient.Color = ColorSequence.new({
                 ColorSequenceKeypoint.new(0, Library.Scheme.AccentColor),
-                ColorSequenceKeypoint.new(0.08, Library.Scheme.MainColor),
-                ColorSequenceKeypoint.new(1, Library.Scheme.MainColor),
+                ColorSequenceKeypoint.new(0.15, Library.Scheme.MainColor),
+                ColorSequenceKeypoint.new(1, Library.Scheme.BackgroundColor),
             })
             _WMLabel.TextColor3 = Library.Scheme.FontColor
             local parts = { Library.WatermarkConfig.ScriptName }
@@ -9118,19 +9110,27 @@ do
                 table.insert(parts, _WMFPS .. " FPS")
             end
             if Library.WatermarkConfig.ShowPing then
-                local ok2, ping = pcall(function()
-                    return math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"].Value)
+                local pingValue = "?ms"
+                local ok2, result = pcall(function()
+                    local statsNet = game:GetService("Stats"):FindFirstChild("Network")
+                    if statsNet then
+                        local pingItem = statsNet:FindFirstChild("Data Ping")
+                        if pingItem then
+                            return math.floor(pingItem.Value)
+                        end
+                    end
+                    return nil
                 end)
-                table.insert(parts, (ok2 and ping or "?") .. "ms")
+                if ok2 and result then
+                    pingValue = result .. "ms"
+                end
+                table.insert(parts, pingValue)
             end
             local newText = table.concat(parts, "  |  ")
             if _WMLabel.Text ~= newText then
                 _WMLabel.Text = newText
-                local size = TextService:GetTextSize(newText, 13, Enum.Font.GothamBlack, Vector2.new(math.huge, math.huge))
-                _WMFrame.Size = UDim2.new(0, size.X + 20, 0, 28)
-            end
-        end)
-        Library:GiveSignal(_WMFPSConn)
+                local size = TextService:GetTextSize(newText, 13, Enum.Font.GothamBold, Vector2.new(math.huge, math.huge))
+                _WMFrame.Size = UDim2.new(0, size.X + 24, 0, 32 Library:GiveSignal(_WMFPSConn)
         Library:GiveSignal(_WMConn)
         return {
             Frame = _WMFrame,
