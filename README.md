@@ -1,2 +1,3 @@
 # Obsidian-UiLibs
-Free to use to
+## Change Logd
+- Fixed Icons
