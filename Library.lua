@@ -5094,24 +5094,14 @@ do
         table.insert(Library.DependencyBoxes, DepGroupbox)
         return DepGroupbox
     end
-    function Funcs:AddTabBox(Info)
-        if typeof(Info) ~= "table" then
-            Info = { Side = Info }
-        end
+    function Funcs:AddTabBox()
         local Groupbox = self
-        local ParentSide
-        if Groupbox.Sides then
-            ParentSide = Info.Side == 1 and Groupbox.Sides[1] or Groupbox.Sides[2]
-        elseif Groupbox.Container then
-            ParentSide = Groupbox.Container
-        else
-            ParentSide = Groupbox
-        end
+        local ParentContainer = Groupbox.Container
         local BoxHolder = New("Frame", {
             AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
             Size = UDim2.fromScale(1, 0),
-            Parent = ParentSide,
+            Parent = ParentContainer,
         })
         New("UIListLayout", {
             Padding = UDim.new(0, 6),
@@ -5323,6 +5313,7 @@ do
             return T
         end
         table.insert(Groupbox.Elements, { Holder = BoxHolder, Visible = true, Type = "TabBox" })
+        Groupbox:Resize()
         return TabBox
     end
     BaseGroupbox.__index = Funcs
