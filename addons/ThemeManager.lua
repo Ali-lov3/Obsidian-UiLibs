@@ -96,6 +96,7 @@ do
     }
     function ThemeManager:SetLibrary(library)
         self.Library = library
+        library.ThemeManager = self
     end
     function ThemeManager:GetPaths()
         local paths = {}
@@ -127,27 +128,45 @@ do
         self.Folder = folder
         self:BuildFolderTree()
     end
-    function ThemeManager:ApplyTheme(theme)
-        local customThemeData = self:GetCustomTheme(theme)
-        local data = customThemeData or self.BuiltInThemes[theme]
-        if not data then return end
-        local scheme = data[2]
-        for idx, val in pairs(customThemeData or scheme) do
+    function ThemeManager:ApplyThemeData(data)
+        if typeof(data) ~= "table" then
+            return false
+        end
+        for idx, val in pairs(data) do
             if idx == "VideoLink" then
                 continue
             elseif idx == "FontFace" then
-                self.Library:SetFont(Enum.Font[val])
-                if self.Library.Options[idx] then
-                    self.Library.Options[idx]:SetValue(val)
+                local FontFace = typeof(val) == "EnumItem" and val or Enum.Font[val]
+                if FontFace then
+                    self.Library:SetFont(FontFace)
+                    if self.Library.Options[idx] then
+                        self.Library.Options[idx]:SetValue(FontFace.Name)
+                    end
                 end
-            else
-                self.Library.Scheme[idx] = Color3.fromHex(val)
-                if self.Library.Options[idx] then
-                    self.Library.Options[idx]:SetValueRGB(Color3.fromHex(val))
+            elseif table.find(ThemeFields, idx) then
+                local Color = val
+                if typeof(Color) == "string" then
+                    local Success, Decoded = pcall(function()
+                        return Color3.fromHex(Color:gsub("^#", ""))
+                    end)
+                    Color = Success and Decoded or nil
+                end
+                if typeof(Color) == "Color3" then
+                    self.Library.Scheme[idx] = Color
+                    if self.Library.Options[idx] then
+                        self.Library.Options[idx]:SetValueRGB(Color)
+                    end
                 end
             end
         end
         self:ThemeUpdate()
+        return true
+    end
+    function ThemeManager:ApplyTheme(theme)
+        local customThemeData = self:GetCustomTheme(theme)
+        local data = customThemeData or self.BuiltInThemes[theme]
+        if not data then return false end
+        return self:ApplyThemeData(data[2] or data)
     end
     function ThemeManager:ThemeUpdate()
         for i, field in ThemeFields do
