@@ -562,3 +562,15 @@ SaveManager:BuildConfigSection(Tabs["UI Settings"])
 ThemeManager:ApplyToTab(Tabs["UI Settings"])
 
 SaveManager:LoadAutoloadConfig()
+
+local Bbot = {
+BackgroundColor = Color3.fromRGB(8, 8, 12),
+MainColor = Color3.fromRGB(18, 18, 28),
+AccentColor = Color3.fromRGB(255, 82, 150),
+OutlineColor = Color3.fromRGB(64, 52, 76),
+FontColor = Color3.fromRGB(245, 245, 255),
+FontFace = Enum.Font.GothamBold,
+}
+
+Window:SetTheme(Bbot)
+Window:SetCornerRadius(20)
