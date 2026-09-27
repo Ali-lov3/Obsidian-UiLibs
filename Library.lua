@@ -175,6 +175,7 @@ local Library = {
     DPIScale = 1,
     CornerRadius = 11,
     CornerRadiusDropdown = false,
+    CornerScales = {},
     IsLightTheme = false,
     Scheme = {
         BackgroundColor = Color3.fromRGB(0, 0, 0),
@@ -1288,6 +1289,15 @@ function Library:AddOutline(Frame: GuiObject)
     })
     return OutlineStroke, ShadowStroke
 end
+function Library:AddCorner(Frame: GuiObject, Scale: number?)
+    local Corner = New("UICorner", {
+        CornerRadius = UDim.new(0, Library.CornerRadius * (Scale or 1)),
+        Parent = Frame,
+    })
+    table.insert(Library.Corners, Corner)
+    Library.CornerScales[Corner] = Scale or 1
+    return Corner
+end
 function Library:AddBlank(Frame: GuiObject, Size: UDim2)
     return New("Frame", {
         BackgroundTransparency = 1,
@@ -1438,13 +1448,7 @@ function Library:AddDraggableIconButton(Icon: string, Func, ExcludeScaling: bool
         ZIndex = 11,
         Parent = Button
     })
-    table.insert(
-        Library.Corners,
-        New("UICorner", {
-            CornerRadius = UDim.new(0, Library.CornerRadius / 2),
-            Parent = ButtonImage,
-        })
-    )
+    Library:AddCorner(ButtonImage, 0.5)
     Button.MouseButton1Click:Connect(function()
         Library:SafeCallback(Func, Table)
     end)
@@ -1552,6 +1556,7 @@ function Library:AddContextMenu(
             BackgroundColor3 = "BackgroundColor",
             BottomImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
             CanvasSize = UDim2.fromOffset(0, 0),
+            ClipsDescendants = true,
             ScrollBarImageColor3 = "OutlineColor",
             ScrollBarThickness = List == 2 and 2 or 0,
             Size = typeof(Size) == "function" and Size() or Size,
@@ -1563,6 +1568,7 @@ function Library:AddContextMenu(
     else
         Menu = New("Frame", {
             BackgroundColor3 = "BackgroundColor",
+            ClipsDescendants = true,
             Size = typeof(Size) == "function" and Size() or Size,
             Visible = false,
             ZIndex = 10,
@@ -1579,6 +1585,7 @@ function Library:AddContextMenu(
         Color = "OutlineColor",
         Parent = Menu,
     })
+    Library:AddCorner(Menu)
     local Table = {
         Active = false,
         Holder = Holder,
@@ -3646,11 +3653,13 @@ do
             Active = not Slider.Disabled,
             AnchorPoint = Vector2.new(0, 1),
             BackgroundColor3 = "MainColor",
+            ClipsDescendants = true,
             Position = UDim2.fromScale(0, 1),
             Size = UDim2.new(1, 0, 0, 15),
             Text = "",
             Parent = Holder,
         })
+        Library:AddCorner(Bar)
         New("UIStroke", {
             Color = "OutlineColor",
             Parent = Bar,
@@ -5689,6 +5698,37 @@ function Library:SetGradientAnimation(State: boolean)
         end
     end
 end
+function Library:SetTheme(Theme)
+    if typeof(Theme) == "string" and self.ThemeManager then
+        return self.ThemeManager:ApplyTheme(Theme)
+    end
+    if self.ThemeManager and typeof(Theme) == "table" and self.ThemeManager.ApplyThemeData then
+        return self.ThemeManager:ApplyThemeData(Theme)
+    end
+    assert(typeof(Theme) == "table", "Expected a theme name or theme table.")
+    local Fields = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor" }
+    for _, Field in Fields do
+        local Value = Theme[Field]
+        if typeof(Value) == "Color3" then
+            self.Scheme[Field] = Value
+        elseif typeof(Value) == "string" then
+            local Success, Color = pcall(function()
+                return Color3.fromHex(Value:gsub("^#", ""))
+            end)
+            if Success then
+                self.Scheme[Field] = Color
+            end
+        end
+    end
+    local FontFace = Theme.FontFace
+    if typeof(FontFace) == "EnumItem" then
+        self:SetFont(FontFace)
+    elseif typeof(FontFace) == "string" and Enum.Font[FontFace] then
+        self:SetFont(Enum.Font[FontFace])
+    end
+    self:UpdateColorsUsingRegistry()
+    return true
+end
 function Library:CreateWindow(WindowInfo)
     WindowInfo = Library:Validate(WindowInfo, Templates.Window)
     local ViewportSize: Vector2 = workspace.CurrentCamera.ViewportSize
@@ -6130,6 +6170,9 @@ function Library:CreateWindow(WindowInfo)
     function Window:SetGlow(State: boolean)
         return Library:SetGlow(State)
     end
+    function Window:SetTheme(Theme)
+        return Library:SetTheme(Theme)
+    end
     function Window:SetFooter(footer: string)
         assert(typeof(footer) == "string", "Expected string for Footer, got: " .. typeof(footer))
         FooterLabel.Text = footer
@@ -6137,17 +6180,16 @@ function Library:CreateWindow(WindowInfo)
     end
     function Window:SetCornerRadius(Radius: number)
         assert(typeof(Radius) == "number", "Expected number for Radius, got: " .. typeof(Radius))
-        Radius = math.min(Radius, 20)
+        Radius = math.clamp(Radius, 0, 20)
         for _, UICorner in Library.Corners do
-            if UICorner.CornerRadius.Offset == Library.CornerRadius / 2 then
-                UICorner.CornerRadius = UDim.new(0, Radius / 2)
-            else
-                UICorner.CornerRadius = UDim.new(0, Radius)
-            end
+            local Scale = Library.CornerScales[UICorner] or 1
+            UICorner.CornerRadius = UDim.new(0, Radius * Scale)
         end
         Library.CornerRadius = Radius
         WindowInfo.CornerRadius = Radius
-        ResizeButton.Position = UDim2.new(1, -Radius / 4, 0, 0)
+        if ResizeButton then
+            ResizeButton.Position = UDim2.new(1, -Radius / 4, 0, 0)
+        end
         BottomBackground.Size = UDim2.new(1, 0, 0, 20 + Radius)
         for _, Tab in Library.Tabs do
             if Tab.IsKeyTab then
