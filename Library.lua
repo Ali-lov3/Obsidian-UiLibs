@@ -3683,6 +3683,7 @@ do
             Size = UDim2.fromScale(0.5, 1),
             Parent = Bar,
         })
+        Library:AddCorner(Fill)
         function Slider:UpdateColors()
             if Library.Unloaded then
                 return
@@ -9272,6 +9273,7 @@ do
     local _WMFPS = 0
     local _WMFrameCount = 0
     local _WMLastTime = tick()
+    local _wmCorner = nil
     Library.WatermarkConfig = {
         ShowWatermark = false,
         ScriptName = "Script",
@@ -9286,6 +9288,14 @@ do
         config = config or {}
         for k, v in pairs(config) do
             Library.WatermarkConfig[k] = v
+        end
+        if _wmCorner then
+            Library.CornerScales[_wmCorner] = nil
+            local CornerIndex = table.find(Library.Corners, _wmCorner)
+            if CornerIndex then
+                table.remove(Library.Corners, CornerIndex)
+            end
+            _wmCorner = nil
         end
         if _WMGui then _WMGui:Destroy() end
         if _WMConn then _WMConn:Disconnect() end
@@ -9306,19 +9316,18 @@ do
         end
         _WMFrame = Instance.new("Frame")
         _WMFrame.Name = "WatermarkFrame"
-        _WMFrame.BackgroundColor3 = Library.Scheme.BackgroundColor
-        _WMFrame.BackgroundTransparency = 0
+        _WMFrame.BackgroundColor3 = cfg.BackgroundColor
+        _WMFrame.BackgroundTransparency = cfg.BackgroundTransparency
         _WMFrame.BorderSizePixel = 0
-        _WMFrame.Position = UDim2.new(0, 10, 0, 10)
-        _WMFrame.Size = UDim2.new(0, 220, 0, 32)
+        _WMFrame.Position = UDim2.new(0, 12, 0, 12)
+        _WMFrame.Size = UDim2.new(0, 220, 0, 36)
+        _WMFrame.ClipsDescendants = true
         _WMFrame.Visible = cfg.ShowWatermark
         _WMFrame.Parent = _WMGui
-        local _wmCorner = Instance.new("UICorner")
-        _wmCorner.CornerRadius = UDim.new(0, Library.CornerRadius)
-        _wmCorner.Parent = _WMFrame
+        _wmCorner = Library:AddCorner(_WMFrame)
         local _wmStroke = Instance.new("UIStroke")
         _wmStroke.Color = Library.Scheme.AccentColor
-        _wmStroke.Thickness = 1.5
+        _wmStroke.Thickness = 1.25
         _wmStroke.Parent = _WMFrame
         local _wmGradient = Instance.new("UIGradient")
         _wmGradient.Color = ColorSequence.new({
@@ -9328,20 +9337,21 @@ do
         })
         _wmGradient.Parent = _WMFrame
         local _wmPadding = Instance.new("UIPadding")
-        _wmPadding.PaddingLeft = UDim.new(0, 12)
-        _wmPadding.PaddingRight = UDim.new(0, 10)
-        _wmPadding.PaddingTop = UDim.new(0, 2)
-        _wmPadding.PaddingBottom = UDim.new(0, 2)
+        _wmPadding.PaddingLeft = UDim.new(0, 14)
+        _wmPadding.PaddingRight = UDim.new(0, 12)
+        _wmPadding.PaddingTop = UDim.new(0, 5)
+        _wmPadding.PaddingBottom = UDim.new(0, 5)
         _wmPadding.Parent = _WMFrame
         _WMLabel = Instance.new("TextLabel")
         _WMLabel.Name = "WatermarkLabel"
         _WMLabel.BackgroundTransparency = 1
         _WMLabel.Size = UDim2.new(1, 0, 1, 0)
-        _WMLabel.Font = Enum.Font.GothamBold
+        _WMLabel.FontFace = Library.Scheme.Font
         _WMLabel.Text = cfg.ScriptName
-        _WMLabel.TextColor3 = Library.Scheme.FontColor
+        _WMLabel.TextColor3 = cfg.TextColor
         _WMLabel.TextSize = 13
         _WMLabel.TextXAlignment = Enum.TextXAlignment.Left
+        _WMLabel.TextYAlignment = Enum.TextYAlignment.Center
         _WMLabel.Parent = _WMFrame
         _WMFPSConn = RunService.RenderStepped:Connect(function()
             _WMFrameCount += 1
@@ -9358,14 +9368,16 @@ do
                 return
             end
             _WMFrame.Visible = true
-            _WMFrame.BackgroundColor3 = Library.Scheme.BackgroundColor
+            _WMFrame.BackgroundColor3 = Library.WatermarkConfig.BackgroundColor
+            _WMFrame.BackgroundTransparency = Library.WatermarkConfig.BackgroundTransparency
             _wmStroke.Color = Library.Scheme.AccentColor
             _wmGradient.Color = ColorSequence.new({
                 ColorSequenceKeypoint.new(0, Library.Scheme.AccentColor),
                 ColorSequenceKeypoint.new(0.15, Library.Scheme.MainColor),
                 ColorSequenceKeypoint.new(1, Library.Scheme.BackgroundColor),
             })
-            _WMLabel.TextColor3 = Library.Scheme.FontColor
+            _WMLabel.FontFace = Library.Scheme.Font
+            _WMLabel.TextColor3 = Library.WatermarkConfig.TextColor
             local parts = { Library.WatermarkConfig.ScriptName }
             if Library.WatermarkConfig.ShowName then
                 table.insert(parts, lp.Name)
@@ -9394,7 +9406,7 @@ do
             if _WMLabel.Text ~= newText then
                 _WMLabel.Text = newText
                 local size = TextService:GetTextSize(newText, 13, Enum.Font.GothamBold, Vector2.new(math.huge, math.huge))
-                _WMFrame.Size = UDim2.new(0, size.X + 24, 0, 32)
+                _WMFrame.Size = UDim2.new(0, size.X + 32, 0, 36)
             end
         end)
         Library:GiveSignal(_WMFPSConn)
